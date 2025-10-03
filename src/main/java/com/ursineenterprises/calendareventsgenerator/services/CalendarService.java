@@ -9,20 +9,20 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 
 import com.google.api.services.calendar.model.Events;
+import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import com.ursineenterprises.calendareventsgenerator.Config;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,10 +45,14 @@ public class CalendarService {
             throw new IllegalStateException("Missing env var: GOOGLE_CREDENTIALS_FILE_PATH");
         }
 
-        try (FileInputStream in = new FileInputStream(credentialsPath)) {
+        try (InputStream in = CalendarEventsGenerator.class.getResourceAsStream("/" + credentialsPath)) {
+            if (in == null) {
+                throw new RuntimeException(credentialsPath + " not found in classpath!");
+            }
+
             GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new java.io.InputStreamReader(in));
 
-            String scopes = Config.get("google.api.scopes", "GOOGLE_API_SCOPES");
+            String scopes = Config.get("google.scopes", "GOOGLE_API_SCOPES");
             GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
                     JSON_FACTORY,
@@ -100,7 +104,7 @@ public class CalendarService {
         LocalDate next = today.with(TemporalAdjusters.nextOrSame(desired));
 
         ZonedDateTime startZdt = ZonedDateTime.of(next, ev.getTime(), ZoneId.of(this.timezone));
-        ZonedDateTime endZdt = startZdt.plusDays(1);
+        ZonedDateTime endZdt = startZdt.plusHours(1);
 
         Event event = new Event();
         event.setSummary(ev.getDescription());

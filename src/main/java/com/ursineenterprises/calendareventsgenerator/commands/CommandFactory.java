@@ -2,11 +2,13 @@ package com.ursineenterprises.calendareventsgenerator.commands;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import com.ursineenterprises.calendareventsgenerator.Config;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
 import com.ursineenterprises.calendareventsgenerator.services.CalendarService;
 
 import java.io.File;
+import java.io.InputStream;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
@@ -19,32 +21,37 @@ public class CommandFactory {
             return new HelpCommand();
         }
 
-        String calendarId = Config.get(null, "GOOGLE_CALENDAR_ID");
+        String calendarId = Config.get("google.calendar.id", "GOOGLE_CALENDAR_ID");
         if (calendarId == null) throw new IllegalStateException("Missing env var: GOOGLE_CALENDAR_ID");
 
-        String eventsFilePath = Config.get(null, "EVENTS_FILE");
+        String eventsFilePath = Config.get("events.file.path", "EVENTS_FILE_PATH");
         if (eventsFilePath == null) throw new IllegalStateException("Missing env var: EVENTS_FILE");
 
-        ObjectMapper mapper = new ObjectMapper();
-        List<Map<String, Object>> rawEvents = mapper.readValue(new File(eventsFilePath), new TypeReference<>() {});
-
-        List<ZoomEvent> events = rawEvents.stream().map(map -> new ZoomEvent(
-                DayOfWeek.valueOf(((String) map.get("dayOfWeek")).toUpperCase()),
-                LocalTime.parse(((String) map.get("time"))),
-                (String) map.get("zoomUrl"),
-                (String) map.get("description")
-        )).toList();
-
         CalendarService cal = new CalendarService();
+        ObjectMapper mapper = new ObjectMapper();
 
-        if (args.length > 0) {
-            return switch (args[0]) {
-                case "--dry-run" -> new DryRunCommand(cal, calendarId, events);
-                case "--single-dry-run" -> new SingleDryRunCommand(cal, calendarId, (ZoomEvent) events);
-                default -> new HelpCommand();
-            };
+        try (InputStream in = CalendarEventsGenerator.class.getResourceAsStream("/" + eventsFilePath)) {
+            if (in == null) {
+                throw new RuntimeException(eventsFilePath + " not found in classpath!");
+            }
+
+            List<Map<String, Object>> rawEvents = mapper.readValue(in, new TypeReference<>() {});
+            List<ZoomEvent> events = rawEvents.stream().map(map -> new ZoomEvent(
+                    DayOfWeek.valueOf(((String) map.get("dayOfWeek")).toUpperCase()),
+                    LocalTime.parse(((String) map.get("time"))),
+                    (String) map.get("zoomUrl"),
+                    (String) map.get("description")
+            )).toList();
+
+            if (args.length > 0) {
+                return switch (args[0]) {
+                    case "--dry-run" -> new DryRunCommand(cal, calendarId, events);
+                    case "--single-dry-run" -> new SingleDryRunCommand(cal, calendarId, (ZoomEvent) events);
+                    default -> new HelpCommand();
+                };
+            }
+
+            return new NormalRunCommand(cal, calendarId, events);
         }
-
-        return new NormalRunCommand(cal, calendarId, events);
     }
 }

@@ -6,16 +6,23 @@ import java.util.Properties;
 
 public class Config {
     private static final Properties properties = new Properties();
+    private static final String ENV = System.getProperty("app.env", "local");
 
     static {
-        try (InputStream in = Config.class.getResourceAsStream("/application.properties")) {
-            if (in != null) {
-                properties.load(in);
-            }
-            } catch (IOException e) {
-            System.out.println("Could not load application.properties file - " + e.getMessage());
+        String basePropertiesFile = "/application.properties";
+        String envPropertiesFile = "/application-" + ENV + ".properties";
+
+        try (InputStream base = Config.class.getResourceAsStream(basePropertiesFile)) {
+            if (base != null) properties.load(base);
+        } catch (IOException e) {
+            System.out.println("Could not load " + basePropertiesFile + " file - " + e.getMessage());
         }
 
+        try (InputStream in = Config.class.getResourceAsStream(envPropertiesFile)) {
+            if (in != null) properties.load(in);
+        } catch (IOException e) {
+            System.out.println("Could not load " + envPropertiesFile + " file - " + e.getMessage());
+        }
     }
 
     public static String get(String key, String envVarName) {
