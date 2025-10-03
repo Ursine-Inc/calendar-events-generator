@@ -12,8 +12,8 @@ A Java 23 standalone CLI application that will create recurring weekly Google Ca
 ## Build JAR
 
 ```bash
-$ ./gradlew clean package shadowJar
-$ java -jar build/libs/google-calendar-events-generator-1.0.0-SNAPSHOT.jar
+$ ./gradlew clean build shadowJar
+$ java -Dapp.env=local|prod -jar build/libs/calendar-events-generator-1.0.0-SNAPSHOT.jar
 ```
 
 

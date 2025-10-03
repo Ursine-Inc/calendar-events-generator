@@ -34,3 +34,13 @@ out/
 
 ### VS Code ###
 .vscode/
+
+application-local.properties
+application-dev.properties
+application-prod.properties
+application-cloud.properties
+application.properties
+
+.DS_Store
+credentials.json
+events.json
