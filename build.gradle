@@ -1,15 +1,15 @@
 import java.time.Instant
 
 plugins {
-    id("java")
-    id("application")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.gorylenko.gradle-git-properties") version "2.4.2"
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gorylenko.gradle-git-properties' version '2.4.2'
 }
 
-group = 'com.ursineenterprises'
-version = '1.0.0-SNAPSHOT'
-description = 'calendar-events-generator'
+group = project.findProperty("group") ?: "com.ursineenterprises"
+version = project.findProperty("version") ?: "1.0.0-SNAPSHOT"
+description = project.findProperty("description") ?: "A tool to generate Google Calendar events from a CSV file."
 
 java {
     toolchain {
@@ -18,7 +18,7 @@ java {
 }
 
 application {
-    mainClass.set("com.ursineenterprises.calendareventsgenerator")
+    mainClass.set(project.findProperty("mainClass") ?: "com.ursine.calendar.Main"))
 }
 
 repositories {
@@ -56,8 +56,7 @@ tasks.test {
 }
 
 def buildTime = Instant.now().toString()
-
-def gitCommit = "UNKNOWN"
+def gitCommit = 'UNKNOWN'
 try {
     def proc = ["git", "rev-parse", "--short", "HEAD"].execute(null, rootDir)
     proc.waitFor()
@@ -67,14 +66,119 @@ try {
 }
 
 shadowJar {
-    archiveBaseName.set("calendareventsgenerator")
+    archiveBaseName.set("calendar-events-generator")
     archiveClassifier.set("")
     archiveVersion.set(version.toString())
+
     manifest {
         attributes(
-                "Main-Class": application.mainClass.get(),
+                "Main-Class": provider { application.mainClass.get() },
+                "Implementation-Version": version.toString(),
                 "Build-Time": buildTime,
                 "Git-Commit": gitCommit
         )
     }
 }
+
+tasks.named('distZip') {
+    dependsOn tasks.named('shadowJar')
+}
+
+tasks.named('distTar') {
+    dependsOn tasks.named('shadowJar')
+}
+
+tasks.named('startScripts') {
+    dependsOn tasks.named('shadowJar')
+}
+
+tasks.register('pkg') {
+    group = 'build'
+    description = 'Cleans, builds, and produces the shadow/fat JAR'
+    doFirst {
+        if (project.hasProperty('forceClean') && project.property('forceClean') == 'true') {
+            tasks.clean.execute()
+        }
+    }
+    dependsOn 'clean', 'build', 'shadowJar'
+}
+
+tasks.register("release") {
+    group = "versioning"
+    description = "Converts SNAPSHOT version to release version and builds fat JAR"
+
+    dependsOn "shadowJar"
+
+    doLast {
+        def currentVersion = project.version.toString()
+        if (!currentVersion.endsWith("-SNAPSHOT")) {
+            println "Already a release: $currentVersion"
+            return
+        }
+
+        def releaseVersion = currentVersion.replace("-SNAPSHOT", "")
+        println "Releasing version $releaseVersion"
+
+        // Update gradle.properties
+        def propertiesFile = file("gradle.properties")
+        def props = new Properties()
+        propertiesFile.withInputStream { props.load(it) }
+        props.setProperty("version", releaseVersion)
+        propertiesFile.withOutputStream { props.store(it, null) }
+
+        project.version = releaseVersion
+
+        println "Production JAR built: build/libs/${project.name}-$releaseVersion.jar"
+    }
+}
+
+tasks.register("nextSnapshot") {
+    group = "versioning"
+    description = "Bumps version (major, minor, patch) and appends -SNAPSHOT"
+
+    // Accept a project property "type", default to "patch"
+    def bumpType = project.hasProperty("type") ? project.property("type") : "patch"
+
+    doLast {
+        def currentVersion = project.version.toString()
+        def releaseVersion = currentVersion.endsWith("-SNAPSHOT") ? currentVersion.replace("-SNAPSHOT", "") : currentVersion
+        def parts = releaseVersion.tokenize('.')
+        if (parts.size() != 3) {
+            throw new GradleException("Version must be in x.y.z format")
+        }
+
+        def major = parts[0].toInteger()
+        def minor = parts[1].toInteger()
+        def patch = parts[2].toInteger()
+
+        switch (bumpType) {
+            case "major":
+                major += 1
+                minor = 0
+                patch = 0
+                break
+            case "minor":
+                minor += 1
+                patch = 0
+                break
+            case "patch":
+                patch += 1
+                break
+            default:
+                throw new GradleException("Invalid type: $bumpType. Must be major, minor, or patch")
+        }
+
+        def nextSnapshot = "$major.$minor.$patch-SNAPSHOT"
+
+        // Update gradle.properties
+        def propertiesFile = file("gradle.properties")
+        def props = new Properties()
+        propertiesFile.withInputStream { props.load(it) }
+        props.setProperty("version", nextSnapshot)
+        propertiesFile.withOutputStream { props.store(it, null) }
+
+        project.version = nextSnapshot
+        println "Next development version set to $nextSnapshot"
+    }
+}
+
