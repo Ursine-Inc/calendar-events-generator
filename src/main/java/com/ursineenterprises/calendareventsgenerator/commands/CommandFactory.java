@@ -44,8 +44,9 @@ public class CommandFactory {
 
             if (args.length > 0) {
                 return switch (args[0]) {
+                    case "--clear-test-calendar" -> new ClearTestCalendarCommand(cal, calendarId);
                     case "--dry-run" -> new DryRunCommand(cal, calendarId, events);
-                    case "--single-dry-run" -> new SingleDryRunCommand(cal, calendarId, (ZoomEvent) events);
+                    case "--single-dry-run" -> new SingleDryRunCommand(cal, calendarId, events.get(0));
                     default -> new HelpCommand();
                 };
             }

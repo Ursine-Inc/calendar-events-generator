@@ -16,6 +16,8 @@ import com.google.api.services.calendar.model.Events;
 import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import com.ursineenterprises.calendareventsgenerator.Config;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.time.DayOfWeek;
@@ -24,14 +26,26 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CalendarService {
     private static final String APPLICATION_NAME = Config.get("application.name", "APPLICATION_NAME");
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private static final Logger logger = LoggerFactory.getLogger(CalendarEventsGenerator.class);
 
     private final Calendar service;
     private final String timezone;
+
+    protected Calendar createCalendarService() throws Exception {
+        Credential credential = authorize();
+        return new Calendar.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(),
+                JSON_FACTORY,
+                credential
+        ).setApplicationName(APPLICATION_NAME).build();
+    }
 
     public CalendarService() throws Exception {
         this.timezone = Config.get("default.timezone", "DEFAULT_TIMEZONE");
@@ -63,15 +77,6 @@ public class CalendarService {
             LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(port).build();
             return new com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
         }
-    }
-
-    private static Calendar createCalendarService() throws Exception {
-        Credential credential = authorize();
-        return new Calendar.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                JSON_FACTORY,
-                credential
-        ).setApplicationName(APPLICATION_NAME).build();
     }
 
     public boolean eventExists(String calendarId, ZoomEvent ev) throws Exception {
@@ -167,5 +172,52 @@ public class CalendarService {
                 token,
                 body.replace("\n", "").replace("\"", "\\\"")
         );
+    }
+
+    public void clearAllEvents(String calendarId) throws Exception {
+        logger.info("[INFO] Fetching all events from calendar: {}", calendarId);
+
+        Events events = service.events().list(calendarId)
+                .setMaxResults(2500)
+                .setSingleEvents(false)
+                .execute();
+
+        logger.info("[INFO] Event count: {}", events.getItems().size());
+
+        if (events.getItems() == null || events.getItems().isEmpty()) {
+            logger.info("[INFO] No events found to delete.");
+            return;
+        }
+
+        Set<String> deletedSeries = new HashSet<>();
+        int deletedCount = 0;
+        int failedCount = 0;
+
+        for (Event event : events.getItems()) {
+            try {
+                String eventId = event.getId();
+
+                if (event.getRecurringEventId() != null) {
+                    if (deletedSeries.contains(event.getRecurringEventId())) {
+                        continue;
+                    }
+                    eventId = event.getRecurringEventId();
+                    deletedSeries.add(eventId);
+                }
+
+                logger.info("[INFO] Deleting event/series: {} (ID: {})", event.getSummary(), eventId);
+                service.events().delete(calendarId, eventId).execute();
+                deletedCount++;
+            } catch (Exception e) {
+                failedCount++;
+                logger.error("[ERROR] Failed to delete event: {} - {}", event.getSummary(), e.getMessage());
+            }
+        }
+
+        logger.info("[INFO] ✅ Deletion complete: {} deleted, {} failed.", deletedCount, failedCount);
+
+        if (failedCount > 0) {
+            throw new RuntimeException("Failed to delete " + failedCount + " event(s).");
+        }
     }
 }
