@@ -44,3 +44,6 @@ application.properties
 .DS_Store
 credentials.json
 events.json
+# Qodana results
+.qodana/
+qodana.sarif.json
