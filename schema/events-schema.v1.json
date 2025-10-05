@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Events Array",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "dayOfWeek": { "type": "string" },
+      "time": { "type": "string" },
+      "zoomUrl": { "type": "string", "format": "uri" },
+      "description": { "type": "string" }
+    },
+    "required": ["dayOfWeek", "time", "zoomUrl", "description"],
+    "additionalProperties": false
+  }
+}

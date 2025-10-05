@@ -18,7 +18,7 @@ java {
 }
 
 application {
-    mainClass.set(project.findProperty("mainClass") ?: "com.ursine.calendar.Main"))
+    mainClass.set(project.findProperty("mainClass") ?: "com.ursine.calendar.Main")
 }
 
 repositories {
@@ -90,6 +90,10 @@ tasks.named('distTar') {
 
 tasks.named('startScripts') {
     dependsOn tasks.named('shadowJar')
+}
+
+tasks.named('startShadowScripts') {
+    dependsOn tasks.named('jar')
 }
 
 tasks.register('pkg') {
@@ -181,4 +185,3 @@ tasks.register("nextSnapshot") {
         println "Next development version set to $nextSnapshot"
     }
 }
-

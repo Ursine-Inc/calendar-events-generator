@@ -7,7 +7,6 @@ import com.ursineenterprises.calendareventsgenerator.Config;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
 import com.ursineenterprises.calendareventsgenerator.services.CalendarService;
 
-import java.io.File;
 import java.io.InputStream;
 import java.time.DayOfWeek;
 import java.time.LocalTime;
