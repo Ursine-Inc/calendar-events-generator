@@ -92,6 +92,10 @@ tasks.named('startScripts') {
     dependsOn tasks.named('shadowJar')
 }
 
+tasks.named('startShadowScripts') {
+    dependsOn tasks.named('jar')
+}
+
 tasks.register('pkg') {
     group = 'build'
     description = 'Cleans, builds, and produces the shadow/fat JAR'
@@ -181,4 +185,3 @@ tasks.register("nextSnapshot") {
         println "Next development version set to $nextSnapshot"
     }
 }
-
