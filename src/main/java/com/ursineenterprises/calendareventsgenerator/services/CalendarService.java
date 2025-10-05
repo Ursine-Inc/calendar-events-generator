@@ -163,11 +163,12 @@ public class CalendarService {
                 this.timezone);
 
         return String.format(
-                "curl -X POST \\\n" +
-                        "  'https://www.googleapis.com/calendar/v3/calendars/%s/events' \\\n" +
-                        "  -H 'Authorization: Bearer %s' \\\n" +
-                        "  -H 'Content-Type: application/json' \\\n" +
-                        "  -d '%s'",
+                """
+                        curl -X POST \\
+                          'https://www.googleapis.com/calendar/v3/calendars/%s/events' \\
+                          -H 'Authorization: Bearer %s' \\
+                          -H 'Content-Type: application/json' \\
+                          -d '%s'""",
                 calendarId,
                 token,
                 body.replace("\n", "").replace("\"", "\\\"")
