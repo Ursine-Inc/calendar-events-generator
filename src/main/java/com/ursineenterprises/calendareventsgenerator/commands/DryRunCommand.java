@@ -1,7 +1,10 @@
 package com.ursineenterprises.calendareventsgenerator.commands;
 
+import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
 import com.ursineenterprises.calendareventsgenerator.services.CalendarService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -9,6 +12,7 @@ public class DryRunCommand implements Command {
     private final CalendarService calendarService;
     private final String calendarId;
     private final List<ZoomEvent> events;
+    private static final Logger logger = LoggerFactory.getLogger(CalendarEventsGenerator.class);
 
     public DryRunCommand(CalendarService calendarService, String calendarId, List<ZoomEvent> events) {
         this.calendarService = calendarService;
@@ -19,9 +23,9 @@ public class DryRunCommand implements Command {
     @Override
     public void execute() throws Exception {
         for (ZoomEvent event : events) {
-            System.out.println("Processing: " + event);
+            logger.info("Processing: {}", event);
             boolean exists = calendarService.eventExists(calendarId, event);
-            System.out.printf("🧪 DRY RUN: %s %s%n", exists ? "Already exists" : "Would create", event);
+            logger.info("🧪 DRY RUN: {} {} %n", exists ? "Already exists" : "Would create", event);
         }
     }
 }
