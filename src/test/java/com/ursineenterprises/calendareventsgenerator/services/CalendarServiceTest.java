@@ -167,9 +167,7 @@ class CalendarServiceTest {
                 .thenReturn(null) // First call succeeds
                 .thenThrow(new RuntimeException("API Error")); // Second call fails
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            calendarService.clearAllEvents(testCalendarId);
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> calendarService.clearAllEvents(testCalendarId));
 
         assertEquals("Failed to delete 1 event(s).", exception.getMessage());
 
@@ -188,9 +186,7 @@ class CalendarServiceTest {
     void testClearAllEvents_ApiException() throws Exception {
         when(mockEventsList.execute()).thenThrow(new RuntimeException("Calendar API Error"));
 
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            calendarService.clearAllEvents(testCalendarId);
-        });
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> calendarService.clearAllEvents(testCalendarId));
 
         assertEquals("Calendar API Error", exception.getMessage());
 
