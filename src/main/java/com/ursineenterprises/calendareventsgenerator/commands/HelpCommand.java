@@ -1,11 +1,10 @@
 package com.ursineenterprises.calendareventsgenerator.commands;
 
-import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HelpCommand implements Command {
-    private static final Logger logger = LoggerFactory.getLogger(CalendarEventsGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(HelpCommand.class);
 
         @Override
         public void execute() {

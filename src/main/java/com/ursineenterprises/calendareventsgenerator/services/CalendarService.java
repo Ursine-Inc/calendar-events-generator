@@ -33,7 +33,7 @@ import java.util.Set;
 public class CalendarService {
     private static final String APPLICATION_NAME = Config.get("application.name", "APPLICATION_NAME");
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private static final Logger logger = LoggerFactory.getLogger(CalendarEventsGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(CalendarService.class);
 
     private final Calendar service;
     private final String timezone;

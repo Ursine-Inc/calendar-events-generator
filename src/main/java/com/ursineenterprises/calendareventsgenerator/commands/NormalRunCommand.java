@@ -1,6 +1,5 @@
 package com.ursineenterprises.calendareventsgenerator.commands;
 
-import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import com.ursineenterprises.calendareventsgenerator.services.CalendarService;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
 import org.slf4j.Logger;
@@ -13,7 +12,7 @@ public class NormalRunCommand implements Command {
     private final String calendarId;
     private final List<ZoomEvent> events;
 
-    private static final Logger logger = LoggerFactory.getLogger(CalendarEventsGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(NormalRunCommand.class);
 
     public NormalRunCommand(CalendarService cal, String calendarId, List<ZoomEvent> events) {
         this.cal = cal;

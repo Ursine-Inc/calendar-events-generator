@@ -1,6 +1,5 @@
 package com.ursineenterprises.calendareventsgenerator.commands;
 
-import com.ursineenterprises.calendareventsgenerator.CalendarEventsGenerator;
 import com.ursineenterprises.calendareventsgenerator.model.ZoomEvent;
 import com.ursineenterprises.calendareventsgenerator.services.CalendarService;
 import org.slf4j.Logger;
@@ -11,7 +10,7 @@ public class SingleDryRunCommand implements Command {
     private final String calendarId;
     private final ZoomEvent event;
 
-    private static final Logger logger = LoggerFactory.getLogger(CalendarEventsGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(SingleDryRunCommand.class);
 
     public SingleDryRunCommand(CalendarService cal, String calendarId, ZoomEvent event) {
         this.cal = cal;
