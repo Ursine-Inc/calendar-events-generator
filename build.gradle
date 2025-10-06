@@ -18,7 +18,7 @@ java {
 }
 
 application {
-    mainClass.set(project.findProperty("mainClass") ?: "com.ursine.calendar.Main")
+    mainClass.set(project.property("mainClass"))
 }
 
 repositories {
@@ -26,11 +26,19 @@ repositories {
     google()
 }
 
+test {
+    useJUnitPlatform()
+}
+
 dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.36'
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     testCompileOnly 'org.projectlombok:lombok:1.18.36'
+    testImplementation 'org.mockito:mockito-core:5.14.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.0' // if using JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     implementation 'com.google.apis:google-api-services-calendar:v3-rev20250404-2.0.0'
@@ -47,7 +55,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.annotationProcessorPath = configurations.annotationProcessor
 }
 
@@ -66,17 +74,29 @@ try {
 }
 
 shadowJar {
-    archiveBaseName.set("calendar-events-generator")
+    archiveBaseName.set(project.property("archiveBaseName"))
     archiveClassifier.set("")
     archiveVersion.set(version.toString())
 
+    mergeServiceFiles()
+
     manifest {
         attributes(
-                "Main-Class": provider { application.mainClass.get() },
                 "Implementation-Version": version.toString(),
                 "Build-Time": buildTime,
                 "Git-Commit": gitCommit
         )
+    }
+
+    // Set Main-Class after manifest to avoid line wrapping
+    doLast {
+        def jarFile = archiveFile.get().asFile
+        def mainClassName = project.property("mainClass")
+        ant.jar(update: true, destfile: jarFile) {
+            delegate.manifest {
+                attribute(name: 'Main-Class', value: mainClassName)
+            }
+        }
     }
 }
 
