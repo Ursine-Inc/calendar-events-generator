@@ -12,7 +12,12 @@ public class CalendarEventsGenerator {
         try {
             Command cmd = CommandFactory.fromArgs(args);
             cmd.execute();
-        } catch (Exception e) {
+        } 
+         catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
+            System.exit(0);
+        }
+        catch (Exception e) {
             logger.error("Failed to execute command", e);
             System.exit(1);
         }

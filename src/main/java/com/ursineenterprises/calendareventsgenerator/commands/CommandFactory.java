@@ -34,7 +34,11 @@ public class CommandFactory {
                 throw new RuntimeException(eventsFilePath + " not found in classpath!");
             }
 
-            List<Map<String, Object>> rawEvents = mapper.readValue(in, new TypeReference<>() {});
+            List<Map<String, Object>> rawEvents = (List<Map<String, Object>>) rootArray.get(0).get("meetings");
+
+            if (rawEvents == null || rawEvents.isEmpty()) {
+                throw new IllegalStateException("No events found in " + eventsFilePath);
+            }
             List<ZoomEvent> events = rawEvents.stream().map(map -> new ZoomEvent(
                     DayOfWeek.valueOf(((String) map.get("dayOfWeek")).toUpperCase()),
                     LocalTime.parse(((String) map.get("time"))),
