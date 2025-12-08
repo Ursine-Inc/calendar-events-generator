@@ -11,22 +11,24 @@ public class NormalRunCommand implements Command {
     private final CalendarService cal;
     private final String calendarId;
     private final List<ZoomEvent> events;
+    private final String timezone;
 
     private static final Logger logger = LoggerFactory.getLogger(NormalRunCommand.class);
 
-    public NormalRunCommand(CalendarService cal, String calendarId, List<ZoomEvent> events) {
+    public NormalRunCommand(CalendarService cal, String calendarId, List<ZoomEvent> events, String timezone) {
         this.cal = cal;
         this.calendarId = calendarId;
         this.events = events;
+        this.timezone = timezone;
     }
 
     @Override
     public void execute() throws Exception {
+        logger.info("Posting to calendar {}", calendarId);
         for (ZoomEvent ev : events) {
-            logger.info("Processing: {}", ev);
-            var created = cal.insertWeeklyEvent(calendarId, ev);
+            var created = cal.insertWeeklyEvent(calendarId, ev, timezone);
             if (created != null) {
-                logger.info("✅ Created event id = {}", created.getId());
+                logger.info("✅ Created event: {}", created.getDescription());
             }
         }
     }

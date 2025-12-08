@@ -13,7 +13,7 @@ description = project.findProperty("description") ?: "A tool to generate Google 
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(23)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -204,4 +204,14 @@ tasks.register("nextSnapshot") {
         project.version = nextSnapshot
         println "Next development version set to $nextSnapshot"
     }
+}
+
+tasks.register("rebuildAndRun", JavaExec) {
+    group = "application"
+    description = "Rebuilds the Shadow JAR and runs the app"
+
+    dependsOn "clean", "shadowJar"
+    mainClass.set(project.property("mainClass") as String)
+    classpath = files(layout.buildDirectory.file("libs/calendar-events-generator-1.1.0-SNAPSHOT.jar"))
+    args("-Dapp.env=local")
 }

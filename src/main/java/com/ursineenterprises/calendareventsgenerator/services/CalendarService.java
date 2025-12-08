@@ -36,7 +36,8 @@ public class CalendarService {
     private static final Logger logger = LoggerFactory.getLogger(CalendarService.class);
 
     private final Calendar service;
-    private final String timezone;
+    private String timezone;
+    private String frequency;
 
     protected Calendar createCalendarService() throws Exception {
         Credential credential = authorize();
@@ -49,6 +50,7 @@ public class CalendarService {
 
     public CalendarService() throws Exception {
         this.timezone = Config.get("default.timezone", "DEFAULT_TIMEZONE");
+        this.frequency = Config.get("app.frequency", "APP_FREQUENCY");
         this.service = createCalendarService();
     }
 
@@ -102,7 +104,13 @@ public class CalendarService {
                 .anyMatch(e -> summary.equalsIgnoreCase(e.getSummary()));
     }
 
-    public Event insertWeeklyEvent(String calendarId, ZoomEvent ev) throws Exception {
+    public Event insertWeeklyEvent(String calendarId, ZoomEvent ev, String timezone) throws Exception {
+        if (timezone != null && !timezone.isBlank()) {
+            this.timezone = timezone;
+            logger.info("Overriding timezone with: '{}'", timezone);
+        }
+        logger.info("Using default timezone: '{}'", this.timezone);
+
         LocalDate today = LocalDate.now(ZoneId.of(this.timezone));
         DayOfWeek desired = ev.getDayOfWeek();
         LocalDate next = today.with(TemporalAdjusters.nextOrSame(desired));
@@ -116,7 +124,7 @@ public class CalendarService {
         event.setDescription(desc);
 
         List<String> recurrence = new ArrayList<>();
-        recurrence.add("RRULE:FREQ=WEEKLY");
+        recurrence.add(this.frequency);
         event.setRecurrence(recurrence);
 
         EventDateTime start = new EventDateTime()
