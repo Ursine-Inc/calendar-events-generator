@@ -15,7 +15,6 @@ import java.util.Map;
 
 public class CommandFactory {
     public static Command fromArgs(String[] args) throws Exception {
-        // Help should be available even if env vars are missing
         if (args.length > 0 && args[0].equals("--help")) {
             return new HelpCommand();
         }
@@ -34,11 +33,15 @@ public class CommandFactory {
                 throw new RuntimeException(eventsFilePath + " not found in classpath!");
             }
 
+            List<Map<String, Object>> rootArray = mapper.readValue(in, new TypeReference<>() {});
             List<Map<String, Object>> rawEvents = (List<Map<String, Object>>) rootArray.get(0).get("meetings");
 
             if (rawEvents == null || rawEvents.isEmpty()) {
                 throw new IllegalStateException("No events found in " + eventsFilePath);
             }
+
+            String timezone = (String) rootArray.get(0).get("timezone");
+
             List<ZoomEvent> events = rawEvents.stream().map(map -> new ZoomEvent(
                     DayOfWeek.valueOf(((String) map.get("dayOfWeek")).toUpperCase()),
                     LocalTime.parse(((String) map.get("time"))),
@@ -55,7 +58,7 @@ public class CommandFactory {
                 };
             }
 
-            return new NormalRunCommand(cal, calendarId, events);
+            return new NormalRunCommand(cal, calendarId, events, timezone);
         }
     }
 }
